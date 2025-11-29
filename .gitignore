@@ -1,0 +1,21 @@
+# Environment & Secrets
+.env
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Data & Cache
+data/
+*.json
+
+# IDE
+.vscode/
+.idea/
+
+#venv
+booking-env/
+venv/
+env/
