@@ -42,7 +42,7 @@ def fetch_bookings(start_date=None, end_date=None, cache_file=None):
             print(f"❌ Cache loading failed: {e}")
             print("🔄 Falling back to API call...")
     
-    # GraphQL Query (exakt aus deinem curl)
+    # GraphQL Query
     query = """
     query bookingsAnalytics($locationId: String!, $date: Date!, $endDate: Date!, $startingAfter: Date) {
         bookingsAnalytics(locationId: $locationId, date: $date, endDate: $endDate, startingAfter: $startingAfter) {
@@ -438,3 +438,39 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def sync_bookings(start_date, end_date):
+    """
+    Wrapper function for daily_sync.py compatibility
+    Calls fetch_bookings_paginated and saves to database
+    """
+    print(f"🔄 Starting booking sync from {start_date} to {end_date}")
+    
+    bookings = fetch_bookings_paginated(
+        start_date=start_date,
+        end_date=end_date,
+        cache_file=None
+    )
+    
+    if not bookings:
+        return {"status": "error", "message": "No bookings fetched"}
+    
+    return {
+        "status": "success", 
+        "message": f"Synced {len(bookings)} bookings",
+        "count": len(bookings)
+    }
+
+def sync_booking_snapshots(end_date):
+    """Wrapper for BI snapshots"""
+    print(f"📸 Creating booking snapshots up to {end_date}")
+    
+    success = generate_booking_snapshot(
+        snapshot_date=datetime.now().date(),
+        forecast_days=60
+    )
+    
+    if success:
+        return {"status": "success", "message": "Snapshots created successfully"}
+    else:
+        return {"status": "error", "message": "Snapshot creation failed"}
