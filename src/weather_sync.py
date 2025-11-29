@@ -115,5 +115,41 @@ def main():
     else:
         print("❌ Weather sync test failed")
 
+
+def sync_weather():
+    """
+    Wrapper function for daily_sync.py compatibility
+    Fetches weather forecast and saves to database
+    """
+    print("🌤️ Starting weather forecast sync")
+    
+    try:
+        # fetch_weather_forecast returns boolean success, not data!
+        success = fetch_weather_forecast()
+        
+        if not success:
+            return {"status": "error", "message": "Weather forecast failed"}
+        
+        return {
+            "status": "success",
+            "message": "Weather sync completed successfully",
+            "forecasts": int(os.getenv('WEATHER_FORECAST_DAYS', '16'))
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error", 
+            "message": f"Weather sync failed: {str(e)}"
+        }
+
 if __name__ == "__main__":
-    main()
+    # Test both functions
+    print("🧪 Testing weather forecast sync...")
+    success = fetch_weather_forecast()
+    
+    if success:
+        print("🎉 Direct test successful!")
+    
+    print("\n🧪 Testing sync_weather wrapper...")
+    result = sync_weather()
+    print(f"📊 Wrapper result: {result}")
