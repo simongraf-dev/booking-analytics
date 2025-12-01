@@ -19,3 +19,5 @@ data/
 booking-env/
 venv/
 env/
+
+notebooks/

@@ -72,6 +72,22 @@ def log_sync_end(logger, sync_type, stats=None):
     logger.info(f"⏰ Completed at: {datetime.now()}")
     logger.info("=" * 50)
 
+
+
+def log_error(logger, operation, error):
+    """Log error with standardized format"""
+    logger.error(f"❌ Error in {operation}: {str(error)}")
+
+def log_success(logger, operation, details=None):
+    """Log success with standardized format"""
+    logger.info(f"✅ Success: {operation}")
+    if details:
+        if isinstance(details, dict):
+            for key, value in details.items():
+                logger.info(f"  📊 {key}: {value}")
+        else:
+            logger.info(f"  📋 Details: {details}")
+
 if __name__ == "__main__":
     # Test logging setup
     test_logger = setup_logging("test")
