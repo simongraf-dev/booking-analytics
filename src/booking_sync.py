@@ -11,7 +11,9 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 from config.settings import API_CONFIG, DATE_CONFIG
-from src.database import save_booking_snapshot, get_db_connection
+from src.database import save_booking_snapshot, get_db_connection, save_booking, save_booking_snapshot
+
+from utils import parse_booking
 
 def fetch_bookings(start_date=None, end_date=None, cache_file=None):
     """
@@ -455,10 +457,38 @@ def sync_bookings(start_date, end_date):
     if not bookings:
         return {"status": "error", "message": "No bookings fetched"}
     
+    # Save all bookings to database
+    saved_count = 0
+    failed_count = 0
+    
+    print(f"💾 Saving {len(bookings)} bookings to database...")
+    
+    for booking in bookings:
+        conn = get_db_connection()
+        if conn:
+            try:
+                parsed_booking = parse_booking(booking)
+                
+                if save_booking(conn, parsed_booking):
+                    saved_count += 1
+                else:
+                    failed_count += 1
+            except Exception as e:
+                print(f"❌ Error saving booking {booking.get('_id', 'unknown')}: {e}")
+                failed_count += 1
+            finally:
+                conn.close()
+        else:
+            failed_count += 1
+    
+    print(f"✅ Database save complete: {saved_count} saved, {failed_count} failed")
+    
     return {
-        "status": "success", 
-        "message": f"Synced {len(bookings)} bookings",
-        "count": len(bookings)
+        "status": "success" if saved_count > 0 else "error",
+        "message": f"Synced {len(bookings)} bookings, saved {saved_count}",
+        "fetched": len(bookings),
+        "saved": saved_count,
+        "failed": failed_count
     }
 
 def sync_booking_snapshots(end_date):

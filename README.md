@@ -19,7 +19,6 @@ Comprehensive data pipeline for restaurant booking intelligence featuring automa
 - **APIs:** Teburio GraphQL + OpenMeteo REST (historical + forecast)
 - **Automation:** Daily 4-phase cron jobs with comprehensive logging
 - **Environment:** Python virtual environment with modular architecture
-- **Location:** Kiel, Schleswig-Holstein, DE (54.3233°N, 10.1228°E)
 
 ## ✨ Key Features
 

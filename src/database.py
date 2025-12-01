@@ -39,37 +39,45 @@ def test_connection():
 
 def save_booking(conn, booking):
     """Insert single booking with conflict handling"""
-    cursor = conn.cursor()
-    
-    insert_query = """
-    INSERT INTO bookings (
-        id, booking_date, end_date, people, cancelled, no_show, walk_in,
-        source, host, tracking, tag_ids, booking_tags_count, payment, rating
-    ) VALUES (
-        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s::jsonb, %s::jsonb, %s
-    )
-    ON CONFLICT (id) DO UPDATE SET
-        updated_at = NOW()
-    """
-    
-    cursor.execute(insert_query, (
-        booking['id'],
-        booking['booking_date'],
-        booking['end_date'], 
-        booking['people'],
-        booking['cancelled'],
-        booking['no_show'],
-        booking['walk_in'],
-        booking['source'],
-        booking['host'],
-        booking['tracking'],
-        booking['tag_ids'],
-        booking['booking_tags_count'],
-        booking['payment'],
-        booking['rating']
-    ))
-    
-    cursor.close()
+    try:
+        cursor = conn.cursor()
+        
+        insert_query = """
+        INSERT INTO bookings (
+            id, booking_date, end_date, people, cancelled, no_show, walk_in,
+            source, host, tracking, tag_ids, booking_tags_count, payment, rating
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s::jsonb, %s::jsonb, %s
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            updated_at = NOW()
+        """
+        
+        cursor.execute(insert_query, (
+            booking['id'],
+            booking['booking_date'],
+            booking['end_date'], 
+            booking['people'],
+            booking['cancelled'],
+            booking['no_show'],
+            booking['walk_in'],
+            booking['source'],
+            booking['host'],
+            booking['tracking'],
+            booking['tag_ids'],
+            booking['booking_tags_count'],
+            booking['payment'],
+            booking['rating']
+        ))
+        
+        conn.commit()  # ← FEHLT! Ohne das werden keine Daten gespeichert
+        cursor.close()
+        return True    # ← FEHLT! Ohne Return meldet sync_bookings "failed"
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Database error: {e}")
+        return False
 
 def save_bookings_batch(bookings_parsed):
     """Save multiple bookings to database"""
