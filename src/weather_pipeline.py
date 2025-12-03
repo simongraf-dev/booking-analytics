@@ -281,27 +281,56 @@ def test_database_connection():
         conn.close()
 
 def main():
-    """Main function for testing weather import pipeline"""
-    logger.info("Weather Import Pipeline Test")
-    
-    # Test 1: Database connection
+    """Import all weather JSON backups from /data into the database"""
+
+    logger.info("Starting JSON → Database import")
+
     if not test_database_connection():
         logger.error("Database connection failed")
         return
-    
-    # Test 2: Import recent month (November 2024)
-    logger.info("Testing import for November 2024...")
-    result = import_weather_range("2024-11-01", "2024-11-30")
-    
-    if result['status'] == 'success':
-        logger.info("Pipeline test successful!")
-        logger.info(f"JSON backup: {result['json_backup']}")
-        logger.info(f"Database saves: {result['successful_saves']}")
-        
-        # Test database data
-        test_database_connection()
-    else:
-        logger.error("Pipeline test failed!")
+
+    data_dir = "data"
+    if not os.path.exists(data_dir):
+        logger.error(f"Data directory not found: {data_dir}")
+        return
+
+    # Alle JSON-Dateien, alphabetisch sortiert (damit Monate in Reihenfolge)
+    json_files = sorted([f for f in os.listdir(data_dir) if f.endswith(".json")])
+
+    if not json_files:
+        logger.error("No weather JSON files found in /data")
+        return
+
+    logger.info(f"Found {len(json_files)} JSON files to import.")
+
+    total_saved = 0
+
+    for filename in json_files:
+        path = os.path.join(data_dir, filename)
+        logger.info(f"Processing {filename} ...")
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                backup = json.load(f)
+
+            api_data = backup.get("api_data")
+            if not api_data:
+                logger.warning(f"⚠️ No api_data found in {filename}, skipping.")
+                continue
+
+            saved_days = process_weather_data(api_data)
+            total_saved += saved_days
+
+            logger.info(f"→ Saved {saved_days} days from {filename}")
+
+        except Exception as e:
+            logger.error(f"Failed to process {filename}: {e}")
+
+    logger.info(f"JSON import finished. Total days saved: {total_saved}")
+
+    # final check
+    test_database_connection()
+
 
 if __name__ == "__main__":
     main()
