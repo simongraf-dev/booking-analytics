@@ -20,4 +20,6 @@ booking-env/
 venv/
 env/
 
+# Models
 notebooks/
+models/

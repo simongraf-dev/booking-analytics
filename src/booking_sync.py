@@ -25,7 +25,6 @@ from src.database import save_booking_snapshot, get_db_connection, save_booking,
 from src.utils import parse_booking
 
 
-from utils import parse_booking
 
 logger = setup_logging("booking-sync")
 
