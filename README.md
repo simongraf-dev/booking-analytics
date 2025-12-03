@@ -1,48 +1,75 @@
-# Booking Analytics Pipeline
+Booking Analytics & AI Staffing OS
 
-**Production-grade restaurant booking analytics with weather correlation and demand forecasting.**
+Production-grade restaurant intelligence system featuring AI-driven demand forecasting, smart staffing algorithms, and automated weather correlation.
 
-## 🎯 Overview
+🎯 Overview
 
-Comprehensive data pipeline for restaurant booking intelligence featuring automated synchronization, business intelligence snapshots, and weather correlation analysis. Built for real restaurant operations in Kiel, Germany with 3+ years of historical data.
+This system transforms raw booking data into actionable operational insights. It combines historical data, real-time weather forecasts, and machine learning to predict walk-in guests and automatically generate efficient staff rosters for kitchen, service, and bar teams.
 
-## 🏗️ Architecture
+Built for real-world operations in Kiel, Germany.
 
-### 4-Table Data Model
-- **`bookings`** - Main reservations (45,000+ records, 3 days back + 60 days forward)
-- **`booking_snapshots`** - Daily BI snapshots for demand velocity tracking  
-- **`weather_daily`** - Historical weather data (2022-2024, 1000+ days) for correlation analysis
-- **`weather_forecasts`** - 16-day weather forecasts for planning
+✨ Key Features
 
-### Infrastructure
-- **Backend:** PostgreSQL on Ubuntu VPS (Hetzner Cloud)
-- **APIs:** Teburio GraphQL + OpenMeteo REST (historical + forecast)
-- **Automation:** Daily 4-phase cron jobs with comprehensive logging
-- **Environment:** Python virtual environment with modular architecture
+🤖 AI Demand Forecasting
 
-## ✨ Key Features
+Ridge Regression Model: Predicts spontaneous "walk-in" guests based on weather, weekdays, and holidays.
 
-### Business Intelligence
-- 📊 **Walk-In Analytics:** Weather correlation with spontaneous bookings
-- 🔄 **Automated Weather Pipeline:** API → JSON → Database with validation  
-- 🌤️ **Weather Scoring:** Restaurant-optimized weather rating (1-5 scale)
-- 📈 **Demand Velocity:** Track booking patterns over time
-- 🎯 **Predictive Features:** Perfect weather flags, tourist weather detection
-- 💰 **Revenue Correlation:** Weather impact on daily revenue
+7-Day Rolling Forecast: continuously updated with the latest weather forecasts.
 
-### Production Ready
-- 🔒 **Enterprise Grade:** Comprehensive error handling and logging
-- 📝 **Professional Logging:** Centralized logs with performance metrics
-- ⚡ **High Performance:** Optimized PostgreSQL indexes and automated triggers
-- 🔄 **Robust Sync:** Upsert logic prevents data duplication
-- 📊 **Monitoring:** Health checks and database statistics
+Weather Context: Automtically detects "Perfect Patio Weather" or "Cozy Indoor Weather".
 
-## 🚀 Quick Start
+👨‍🍳 Smart Staffing Engine
 
-### Environment Setup
-```bash
+Automated Rostering: Calculates required staff for Kitchen, Pizza Station, Bar, Service, and Runners.
+
+Cost Efficiency Logic: Suggests "Split Shifts" (e.g., 4h Peak Support) instead of full shifts to save labor costs.
+
+Role-Specific Rules:
+
+Pizza: Scales based on expected pizza count (approx. 120 guests threshold).
+
+Bar: Reacts to weekend high-volume pressure.
+
+Service: Adjusts ratios based on total guest load (Reservations + Walk-ins).
+
+📊 Operational Dashboard
+
+Tech Stack: Built with Streamlit and Plotly.
+
+Real-Time Control: Trigger data sync and re-calculations directly from the UI.
+
+Visual Insights: Stacked bar charts for total load and card-based staffing plans.
+
+🏗️ Architecture
+
+Data Model (PostgreSQL)
+
+bookings - Core reservation data (syncs via GraphQL).
+
+weather_forecasts - 16-day forecasts from OpenMeteo.
+
+weather_daily - Historical weather ground truth for training.
+
+walkin_forecast - (NEW) ML-generated predictions per day.
+
+booking_snapshots - Demand velocity tracking.
+
+Infrastructure
+
+Backend: Python 3.10+ on Ubuntu VPS.
+
+ML Ops: scikit-learn model trained on 3+ years of history.
+
+Frontend: Streamlit dashboard for daily usage.
+
+Automation: 4-Phase Cronjob Pipeline.
+
+🚀 Quick Start
+
+1. Environment Setup
+
 # Clone repository
-git clone https://github.com/simongraf-dev/booking-analytics.git
+git clone [https://github.com/simongraf-dev/booking-analytics.git](https://github.com/simongraf-dev/booking-analytics.git)
 cd booking-analytics
 
 # Create virtual environment
@@ -50,335 +77,68 @@ python3 -m venv booking-env
 source booking-env/bin/activate  # Linux/Mac
 # booking-env\Scripts\activate   # Windows
 
-# Install dependencies
+# Install dependencies (now includes streamlit & plotly)
 pip install -r requirements.txt
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your credentials
-```
 
-### Configuration
-```bash
-# Database Configuration (PostgreSQL)
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_NAME=booking_analytics
-DB_USER=your_user
-DB_PASSWORD=your_password
+2. Configuration
 
-# Booking API Configuration (Teburio GraphQL)
-GRAPHQL_API_URL=https://app.teburio.de/graphql
-ACCOUNT_TOKEN=your_api_token
-LOCATION_ID=your_location_id
+Create a .env file with your credentials (see .env.example):
 
-# Weather Configuration (OpenMeteo)
-WEATHER_LATITUDE=yout_latitude
-WEATHER_LONGITUDE=your_longitude
-WEATHER_FORECAST_DAYS=16
-```
+DB_HOST=...
+GRAPHQL_API_URL=...
+WEATHER_LATITUDE=54.32  # Kiel
 
-## 🔧 Usage
 
-### Manual Operations
-```bash
-# Complete 4-phase daily sync
+3. Run the Dashboard
+
+The command center for daily operations:
+
+streamlit run dashboard.py
+
+
+Opens automatically in your browser at http://localhost:8501
+
+🔧 Automation & Pipelines
+
+The system runs a daily ETL pipeline to keep predictions fresh:
+
+# Full manual sync (Bookings + Weather + AI Prediction)
 python src/daily_sync.py
 
-# Individual components
-python src/booking_sync.py          # Teburio booking data
-python src/weather_sync.py          # Weather forecasts  
-python src/weather_pipeline.py      # Historical weather import
+# Run AI prediction only
+python src/predict_walkins.py
 
-# Testing and monitoring
-python src/daily_sync.py health     # Health check
-python src/daily_sync.py manual     # Manual sync with custom dates
-```
 
-### Production Automation
-```bash
-# Setup daily cronjob (10:00 AM)
-crontab -e
-# Add: 0 10 * * * cd /root/booking-analytics && /root/booking-analytics/booking-env/bin/python src/daily_sync.py >> /var/log/booking-sync.log 2>&1
-```
+Production Crontab (Server)
 
-### Monitoring
-```bash
-# Check sync logs
-tail -f /var/log/booking-analytics/daily-sync.log
-tail -f /var/log/booking-analytics/weather-pipeline.log
+0 10 * * * /root/booking-analytics/booking-env/bin/python src/daily_sync.py >> /var/log/booking-sync.log 2>&1
 
-# View database statistics  
-python config/settings.py  # Validate configuration
-python src/database.py     # Test database connection
 
-# Performance monitoring
-docker exec postgres-bookings psql -U bookings_user -d booking_analytics -c "
-SELECT 
-  COUNT(*) as bookings,
-  (SELECT COUNT(*) FROM weather_daily) as weather_days,
-  (SELECT COUNT(*) FROM booking_snapshots) as snapshots
-"
-```
+📁 Project Structure
 
-## 📊 Business Intelligence Queries
-
-### Walk-In Weather Correlation
-```sql
--- Walk-in rate by weather conditions
-SELECT 
-    weather_score,
-    weather_category,
-    AVG(walk_in_percentage) as avg_walkin_rate,
-    COUNT(*) as sample_days,
-    AVG(total_people) as avg_daily_guests
-FROM booking_weather_analytics 
-WHERE booking_day >= CURRENT_DATE - INTERVAL '6 months'
-  AND total_bookings >= 5  -- Filter low-activity days
-GROUP BY weather_score, weather_category
-ORDER BY avg_walkin_rate DESC;
-```
-
-### Weather Impact on Revenue
-```sql
--- Revenue correlation with weather conditions
-SELECT 
-    CASE 
-        WHEN weather_score >= 4 THEN 'Perfect Weather'
-        WHEN weather_score = 3 THEN 'Good Weather'  
-        WHEN weather_score <= 2 THEN 'Poor Weather'
-    END as weather_condition,
-    AVG(total_people) as avg_daily_guests,
-    AVG(total_people * 21) as estimated_daily_revenue_eur,
-    COUNT(*) as sample_days
-FROM booking_weather_analytics
-WHERE booking_day >= CURRENT_DATE - INTERVAL '1 year'
-GROUP BY weather_condition
-ORDER BY estimated_daily_revenue_eur DESC;
-```
-
-### Demand Velocity Tracking
-```sql
--- Track how bookings develop over time for specific future date
-SELECT 
-    snapshot_created_at::date as forecast_day,
-    reservierungen as predicted_reservations,
-    bestaetigt_personen as predicted_guests,
-    LAG(bestaetigt_personen) OVER (ORDER BY snapshot_created_at) as previous_prediction
-FROM booking_snapshots 
-WHERE forecast_date = '2025-12-31'  -- New Year's Eve example
-ORDER BY snapshot_created_at DESC
-LIMIT 30;  -- Last 30 days of forecasts
-```
-
-### Best Weather Days Analysis
-```sql
--- Find optimal weather conditions for business
-SELECT 
-    temp_max,
-    precipitation_sum,
-    sunshine_duration,
-    total_people,
-    walk_in_percentage,
-    weather_score
-FROM booking_weather_analytics
-WHERE weather_score = 5  -- Perfect weather days only
-  AND total_people > 50  -- High-volume days
-ORDER BY total_people DESC
-LIMIT 10;
-```
-
-## 📁 Project Structure
-```
 booking-analytics/
-├── README.md
-├── requirements.txt
-├── config/
-│   ├── settings.py          # Environment & business configuration
-│   └── logging_config.py    # Centralized logging setup
+├── dashboard.py           # 🚀 Main Operation Dashboard (Streamlit)
 ├── src/
-│   ├── daily_sync.py        # Main 4-phase orchestrator
-│   ├── booking_sync.py      # Teburio GraphQL integration
-│   ├── weather_sync.py      # OpenMeteo forecast integration
-│   ├── weather_pipeline.py  # Historical weather import (API→JSON→DB)
-│   ├── database.py          # PostgreSQL operations & health checks
-│   └── utils.py            # Helper functions
-├── data/                    # JSON backups and cache files
-├── logs/                    # Local development logs
+│   ├── predict_walkins.py # 🧠 AI Inference Script (Ridge Model)
+│   ├── dashboard_data.py  # 📊 SQL-Views for Dashboard
+│   ├── daily_sync.py      # 🔄 Orchestrator (Phases 1-4)
+│   ├── booking_sync.py    # Teburio GraphQL Wrapper
+│   ├── weather_sync.py    # OpenMeteo Integration
+│   └── ...
+├── models/
+│   └── walkin_ridge_v1.pkl # Trained Model Artifact (Gitignored!)
+├── sql/                   # Database Schemas
+├── logs/                  # Application Logs
+└── ...
 
-```
 
-## 🌤️ Weather Integration Deep Dive
+📈 Business Logic Examples
 
-### Data Sources & Pipeline
-- **Historical:** OpenMeteo ERA5 (2022-2024, 1000+ days) with automatic backfill
-- **Forecast:** OpenMeteo 16-day forecasts (daily updates at 10 AM)
-- **Pipeline:** API → JSON backup → Data validation → Unit conversion → PostgreSQL
-- **Features:** Temperature, precipitation, wind, sunshine, pressure, humidity, weather codes
+Why "Smart" Staffing?
+Instead of static shifts ("We need 3 waiters"), the system calculates:
 
-### Automatic Intelligence
-```sql
--- Restaurant-optimized weather score (automatically calculated)
-CREATE FUNCTION calculate_weather_score(temp_max, precipitation, cloudcover)
--- Perfect weather: 18-25°C, <2mm rain, <50% clouds = Score 5
--- Poor weather: <5°C or >35°C or >15mm rain = Score 2
--- Triggers automatically update scores on new weather data
-```
+"Expected load is 220 guests. Instead of 3 full-time waiters (24h), schedule 2 Full-time + 1 Peak-Runner (18:00-22:00)."
+-> Saves 4 labor hours per day.
 
-### Business Rules Engine
-- **Perfect Weather Days:** 18-25°C, minimal rain → Expect higher walk-ins, staff accordingly
-- **Tourist Weather:** Sunny + warm → May reduce bookings (guests prefer beach/outdoor)  
-- **Cozy Weather:** Cold/rainy → Ideal for indoor dining, less outdoor competition
-- **Storm Days:** High wind/heavy rain → Expect cancellations, prepare contingencies
-
-## 🎯 Daily Data Pipeline (4 Phases)
-
-### Production Automation (10:00 AM Daily)
-```mermaid
-graph TD
-    A[Phase 1: Booking Sync] --> B[Phase 2: Weather Forecasts]
-    B --> C[Phase 3: BI Snapshots]  
-    C --> D[Phase 4: Historical Weather]
-    D --> E[Business Intelligence Ready]
-    
-    A --> A1[3 days back + 60 days forward]
-    B --> B1[16-day weather forecasts]
-    C --> C1[60-day demand snapshots]
-    D --> D1[Yesterday's actual weather]
-```
-
-### Phase Details
-1. **📚 Booking Sync:** Current reservation state (updates + forecasts)
-2. **🌤️ Weather Forecasts:** 16-day ahead planning data
-3. **📸 BI Snapshots:** Daily demand velocity tracking for forecasting
-4. **🌡️ Historical Weather:** Yesterday's actual conditions (1-day API delay)
-
-### Error Handling & Recovery
-- **Graceful Degradation:** Weather failures don't stop booking sync
-- **Comprehensive Logging:** All operations logged with performance metrics
-- **Automatic Retry:** Failed API calls retry with exponential backoff
-- **Health Monitoring:** Database connectivity and data quality checks
-
-## 🔍 Monitoring & Performance
-
-### Log Locations
-```bash
-# Production logs (VPS)
-/var/log/booking-analytics/daily-sync.log       # Main orchestrator
-/var/log/booking-analytics/booking-sync.log     # Teburio API sync
-/var/log/booking-analytics/weather-sync.log     # Weather forecasts
-/var/log/booking-analytics/weather-pipeline.log # Historical weather
-
-# Development logs (local)
-logs/daily-sync.log                             # Local development
-data/weather_*.json                             # API response backups
-```
-
-### Database Statistics (Current Production Data)
-- **🏢 Bookings:** 45,000+ reservation records (2+ years operational data)
-- **🌡️ Weather Daily:** 1,000+ historical weather records (2022-2024)  
-- **🌤️ Weather Forecasts:** 16-day rolling forecasts (daily updates)
-- **📊 BI Snapshots:** Daily demand snapshots for velocity analysis
-- **🔗 Combined Views:** `booking_weather_analytics`, `walk_in_weather_correlation`
-
-### Performance Benchmarks
-- **API Response Time:** OpenMeteo <500ms, Teburio <2s
-- **Database Operations:** Bulk inserts ~100 records/second
-- **Daily Sync Duration:** Complete 4-phase sync ~5-10 minutes
-- **Storage Efficiency:** JSON backups + PostgreSQL ~50MB/year
-
-### Health Check Commands
-```bash
-# Quick system validation
-python src/daily_sync.py health
-
-# Detailed database analysis
-python -c "
-from src.database import get_db_connection
-conn = get_db_connection()
-with conn.cursor() as cur:
-    cur.execute('SELECT COUNT(*) FROM booking_weather_analytics')
-    print(f'Combined records: {cur.fetchone()[0]}')
-    cur.execute('SELECT MIN(booking_day), MAX(booking_day) FROM booking_weather_analytics')  
-    date_range = cur.fetchone()
-    print(f'Data range: {date_range[0]} to {date_range[1]}')
-conn.close()
-"
-```
-
-## 🛠️ Development & Deployment
-
-### Local Development Setup
-```bash
-# Database access via SSH tunnel
-ssh -L 5432:127.0.0.1:5432 root@your-vps-ip -N
-
-# Test individual components
-python src/weather_pipeline.py     # Test weather import
-python src/booking_sync.py test    # Test booking sync with sample data
-python src/daily_sync.py manual    # Manual sync with custom parameters
-```
-
-### Adding New Features
-1. **Additional Weather Sources:** Extend `src/weather_pipeline.py` 
-2. **New Business Rules:** Modify triggers in `sql/weather_schema.sql`
-3. **Enhanced Analytics:** Create views in `sql/analytics_views.sql`
-4. **ML Integration:** Use existing data for forecasting models
-
-### Deployment Pipeline
-```bash
-# Update production environment
-git pull origin main
-source booking-env/bin/activate
-pip install -r requirements.txt
-
-# Database migrations (if needed)
-docker exec -i postgres-bookings psql -U bookings_user -d booking_analytics < sql/new_migrations.sql
-
-# Restart services (cronjobs automatically pick up changes)
-```
-
-## 📈 Business Impact & Use Cases
-
-### Operational Intelligence
-- **📊 Staffing Optimization:** Weather-based staffing decisions save 15-20% labor costs
-- **🎯 Marketing Timing:** Launch campaigns on predicted high-demand days  
-- **📋 Inventory Planning:** Weather-aware purchasing reduces waste 10-15%
-- **💰 Revenue Forecasting:** Accurate 7-day revenue predictions ±5% accuracy
-
-### Strategic Insights  
-- **🌡️ Weather Sensitivity:** Quantify exactly how weather impacts revenue
-- **📈 Capacity Planning:** Identify optimal restaurant capacity during peak conditions
-- **🚶 Walk-In Patterns:** Predict spontaneous bookings based on weather forecasts
-- **🎪 Event Planning:** Schedule special events on optimal weather days
-
-### Data-Driven Decisions
-```sql
--- Example: Should we offer outdoor seating promotion?
-SELECT 
-    DATE(forecast_date) as day,
-    temperature_2m_max as max_temp,
-    precipitation_sum as rain_mm,
-    weather_score,
-    CASE WHEN weather_score >= 4 THEN 'PROMOTE OUTDOOR' 
-         ELSE 'FOCUS INDOOR' END as recommendation
-FROM weather_forecasts 
-WHERE forecast_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 7
-ORDER BY forecast_date;
-```
-
-## 🤝 Professional Portfolio Features
-
-This project demonstrates enterprise-grade data engineering capabilities:
-
-- **🏗️ System Architecture:** Multi-table data model with automated ETL pipelines
-- **🔧 API Integration:** RESTful + GraphQL APIs with robust error handling  
-- **🗄️ Database Design:** PostgreSQL with optimized indexes, triggers, and views
-- **⚙️ DevOps Practices:** Environment configuration, logging, monitoring, deployment
-- **📊 Business Intelligence:** Real-world analytics solving operational challenges
-- **🔄 Production Operations:** Automated daily sync, health checks, performance monitoring
-
----
-
- 
-**Deployed on Hetzner Cloud VPS with automated monitoring and backup strategies.**
+Deployed on Hetzner Cloud VPS.
