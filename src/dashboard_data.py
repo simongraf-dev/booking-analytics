@@ -1,6 +1,7 @@
 import sys
 import os
 import pandas as pd
+import warnings
 from datetime import datetime, timedelta
 
 # Pfad-Setup
@@ -12,7 +13,7 @@ def get_forecast_view(days_ahead=21):
     """
     Holt einen kompletten View für das Dashboard:
     - Vorhergesagte Walk-Ins
-    - Bestehende Reservierungen
+    - Bestehende Reservierungen (OHNE Walk-Ins)
     - Wetterdaten
     """
     conn = get_db_connection()
@@ -32,6 +33,7 @@ def get_forecast_view(days_ahead=21):
         WHERE target_date BETWEEN '{today}' AND '{end_date}'
     ),
     -- 2. Reservierungen (Summiert pro Tag)
+    -- WICHTIG: Wir filtern hier Walk-Ins RAUS, damit sie nicht doppelt zählen
     res_data AS (
         SELECT 
             DATE(booking_date) as date,
@@ -42,6 +44,7 @@ def get_forecast_view(days_ahead=21):
           AND booking_date <= '{end_date} 23:59:59'
           AND cancelled = false 
           AND no_show = false
+          AND walk_in = false  -- <--- NEU: Nur echte Reservierungen!
         GROUP BY DATE(booking_date)
     ),
     -- 3. Wetter (Neueste Vorhersage pro Tag)
@@ -65,7 +68,7 @@ def get_forecast_view(days_ahead=21):
         COALESCE(r.res_count, 0) as res_count,
         COALESCE(w.temp_max, 0) as temp,
         COALESCE(w.rain, 0) as rain,
-        COALESCE(w.sun, 0) / 3600.0 as sun_hours, -- Sekunden zu Stunden
+        COALESCE(w.sun, 0) / 3600.0 as sun_hours,
         w.weathercode
     FROM weather w
     LEFT JOIN forecasts f ON w.forecast_date = f.target_date
@@ -74,7 +77,11 @@ def get_forecast_view(days_ahead=21):
     """
     
     try:
-        df = pd.read_sql(query, conn)
+        # Unterdrücke Warnungen für saubereren Output
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            df = pd.read_sql(query, conn)
+            
         df['datum'] = pd.to_datetime(df['datum']).dt.date
         df['total_guests'] = df['walkins_pred'] + df['reservations']
         

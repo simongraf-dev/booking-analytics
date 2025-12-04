@@ -1,144 +1,109 @@
-Booking Analytics & AI Staffing OS
+Booking Analytics & Smart Staffing OS
 
-Production-grade restaurant intelligence system featuring AI-driven demand forecasting, smart staffing algorithms, and automated weather correlation.
+Operatives Betriebssystem für Gastronomie: KI-Gästeprognose, Personalplanung und Umsatzvorschau.
 
-🎯 Overview
+Gebaut für den realen Einsatz in Kiel.
 
-This system transforms raw booking data into actionable operational insights. It combines historical data, real-time weather forecasts, and machine learning to predict walk-in guests and automatically generate efficient staff rosters for kitchen, service, and bar teams.
+🚀 Features
 
-Built for real-world operations in Kiel, Germany.
+1. KI-Bedarfsprognose
 
-✨ Key Features
+Walk-In Vorhersage: Nutzt Machine Learning (Ridge Regression), um spontane Gäste basierend auf Wetter, Wochentag und Ferien vorherzusagen.
 
-🤖 AI Demand Forecasting
+Wetter-Korrelation: Erkennt automatisch "Terrassen-Wetter" oder "Gemütliches Innen-Wetter".
 
-Ridge Regression Model: Predicts spontaneous "walk-in" guests based on weather, weekdays, and holidays.
+Unsicherheits-Faktor: Visualisiert, wie sicher die Prognose für zukünftige Tage ist (je weiter weg, desto unsicherer).
 
-7-Day Rolling Forecast: continuously updated with the latest weather forecasts.
+2. Intelligente Personalplanung
 
-Weather Context: Automtically detects "Perfect Patio Weather" or "Cozy Indoor Weather".
+Smart Shifts: Berechnet nicht nur Köpfe ("3 Kellner"), sondern schlägt effiziente Schichtmodelle vor (z.B. "2x Lang + 1x Peak 18-22 Uhr").
 
-👨‍🍳 Smart Staffing Engine
+Rollen-Logik: Spezifische Regeln für Küche, Pizza-Station, Bar, Service und Runner.
 
-Automated Rostering: Calculates required staff for Kitchen, Pizza Station, Bar, Service, and Runners.
+Kosten-Effizienz: Spart aktiv Arbeitsstunden durch bedarfsgerechte Planung.
 
-Cost Efficiency Logic: Suggests "Split Shifts" (e.g., 4h Peak Support) instead of full shifts to save labor costs.
+3. Dashboard & Operations
 
-Role-Specific Rules:
+Streamlit UI: Modernes, sauberes Dashboard im Corporate Design.
 
-Pizza: Scales based on expected pizza count (approx. 120 guests threshold).
+User Login: Rollenbasierter Zugriff (Admin/User) mit sicherem Password-Hashing.
 
-Bar: Reacts to weekend high-volume pressure.
+Echtzeit-Daten: Sync mit Reservierungssystem und Wetterdienst auf Knopfdruck.
 
-Service: Adjusts ratios based on total guest load (Reservations + Walk-ins).
+🛠️ Technologie-Stack
 
-📊 Operational Dashboard
+Frontend: Streamlit, Plotly
 
-Tech Stack: Built with Streamlit and Plotly.
+Backend/Logic: Python 3.10+
 
-Real-Time Control: Trigger data sync and re-calculations directly from the UI.
+Datenbank: PostgreSQL (Hetzner Cloud)
 
-Visual Insights: Stacked bar charts for total load and card-based staffing plans.
+ML Engine: Scikit-Learn
 
-🏗️ Architecture
+APIs: Teburio (Reservierungen), OpenMeteo (Wetter)
 
-Data Model (PostgreSQL)
+🏁 Schnellstart
 
-bookings - Core reservation data (syncs via GraphQL).
+Installation
 
-weather_forecasts - 16-day forecasts from OpenMeteo.
-
-weather_daily - Historical weather ground truth for training.
-
-walkin_forecast - (NEW) ML-generated predictions per day.
-
-booking_snapshots - Demand velocity tracking.
-
-Infrastructure
-
-Backend: Python 3.10+ on Ubuntu VPS.
-
-ML Ops: scikit-learn model trained on 3+ years of history.
-
-Frontend: Streamlit dashboard for daily usage.
-
-Automation: 4-Phase Cronjob Pipeline.
-
-🚀 Quick Start
-
-1. Environment Setup
-
-# Clone repository
+# Repository klonen
 git clone [https://github.com/simongraf-dev/booking-analytics.git](https://github.com/simongraf-dev/booking-analytics.git)
 cd booking-analytics
 
-# Create virtual environment
-python3 -m venv booking-env
-source booking-env/bin/activate  # Linux/Mac
-# booking-env\Scripts\activate   # Windows
+# Environment erstellen
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install dependencies (now includes streamlit & plotly)
+# Abhängigkeiten installieren
 pip install -r requirements.txt
 
 
-2. Configuration
+Konfiguration (.env)
 
-Create a .env file with your credentials (see .env.example):
+Erstelle eine .env Datei im Hauptverzeichnis:
 
-DB_HOST=...
+# Datenbank
+DB_HOST=deine-ip
+DB_NAME=booking_analytics
+DB_USER=...
+DB_PASSWORD=...
+
+# APIs
 GRAPHQL_API_URL=...
-WEATHER_LATITUDE=54.32  # Kiel
+ACCOUNT_TOKEN=...
+LOCATION_ID=...
+WEATHER_LATITUDE=54.32
+
+# Business Logic
+PROKOPFUMSATZ=30.0
+PROKOPFUMSATZ_MONTAG=25.0
 
 
-3. Run the Dashboard
+User anlegen
 
-The command center for daily operations:
+Da das Dashboard geschützt ist, musst du erst einen Admin anlegen:
+
+python src/create_admin.py
+
+
+Starten
 
 streamlit run dashboard.py
 
 
-Opens automatically in your browser at http://localhost:8501
-
-🔧 Automation & Pipelines
-
-The system runs a daily ETL pipeline to keep predictions fresh:
-
-# Full manual sync (Bookings + Weather + AI Prediction)
-python src/daily_sync.py
-
-# Run AI prediction only
-python src/predict_walkins.py
-
-
-Production Crontab (Server)
-
-0 10 * * * /root/booking-analytics/booking-env/bin/python src/daily_sync.py >> /var/log/booking-sync.log 2>&1
-
-
-📁 Project Structure
+📂 Projektstruktur
 
 booking-analytics/
-├── dashboard.py           # 🚀 Main Operation Dashboard (Streamlit)
+├── dashboard.py           # 🚀 Hauptanwendung (Streamlit)
 ├── src/
-│   ├── predict_walkins.py # 🧠 AI Inference Script (Ridge Model)
-│   ├── dashboard_data.py  # 📊 SQL-Views for Dashboard
-│   ├── daily_sync.py      # 🔄 Orchestrator (Phases 1-4)
-│   ├── booking_sync.py    # Teburio GraphQL Wrapper
-│   ├── weather_sync.py    # OpenMeteo Integration
-│   └── ...
+│   ├── auth.py            # Login & Sicherheit
+│   ├── predict_walkins.py # KI-Modell Inferenz
+│   ├── dashboard_data.py  # SQL Aggregationen
+│   ├── booking_sync.py    # API Connector
+│   └── create_admin.py    # Admin Tool
 ├── models/
-│   └── walkin_ridge_v1.pkl # Trained Model Artifact (Gitignored!)
-├── sql/                   # Database Schemas
-├── logs/                  # Application Logs
+│   └── walkin_ridge_v1.pkl # (Gitignored)
 └── ...
 
 
-📈 Business Logic Examples
-
-Why "Smart" Staffing?
-Instead of static shifts ("We need 3 waiters"), the system calculates:
-
-"Expected load is 220 guests. Instead of 3 full-time waiters (24h), schedule 2 Full-time + 1 Peak-Runner (18:00-22:00)."
--> Saves 4 labor hours per day.
-
-Deployed on Hetzner Cloud VPS.
+Status: In Produktion.
